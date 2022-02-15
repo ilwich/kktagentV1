@@ -1,17 +1,17 @@
 """Модуль обмена с сервером чеков"""
 import requests
+import time
 from models import *
 from setting import settings
 from loggings import w_loggings
 
-from icecream import ic
 
 def get_token():
     """Получение токена для API"""
-    data = {'username': settings.LOGIN,      # Имя пользователя БД
+    data = {'username': settings.LOGIN,  # Имя пользователя БД
             'password': settings.PASSWORD
             }
-    url = settings.URL+'/api-token-auth/'  # Адрес эндпоинта сервера чеков
+    url = settings.URL + '/api-token-auth/'  # Адрес эндпоинта сервера чеков
     response = requests.post(url, json=data)  # Делаем POST-запрос с данными пользователя
     # Поскольку данные пришли в формате json, переведем их в python
     if response.status_code == 200:
@@ -26,8 +26,16 @@ def get_token():
 def get_kkt():
     """ Получаем список касс на сервере"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/kkts/'  # Полный адрес эндпоинта
-    response = requests.get(url, headers=headers)  # Делаем GET-запрос
+    url = settings.URL + '/api/kkts/'  # Полный адрес эндпоинта
+    response = ''
+    while response == '':
+        try:
+            response = requests.get(url, headers=headers)  # Делаем GET-запрос
+            break
+        except:
+            w_loggings("Connection refused by the server..")
+            time.sleep(5)
+            continue
     # Поскольку данные пришли в формате json, переведем их в python
     response_on_python = response.json()
     # Запишем полученные данные в файл kkt.txt
@@ -47,12 +55,20 @@ def get_kkt():
 def get_kkt_detail(fn_number):
     """Получаем информацию о кассе с сервера по номеру ФН"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/kkt/'  # Полный адрес эндпоинта
+    url = settings.URL + '/api/kkt/'  # Полный адрес эндпоинта
     request = ''.join([url, fn_number])
-    response = requests.get(request, headers=headers)  # Делаем GET-запрос
+    response = ''
+    while response == '':
+        try:
+            response = requests.get(request, headers=headers)  # Делаем GET-запрос
+            break
+        except:
+            w_loggings("Connection refused by the server..")
+            time.sleep(5)
+            continue
     # Поскольку данные пришли в формате json, переведем их в python
     response_on_python = response.json()
-    if response.status_code == 200 :
+    if response.status_code == 200:
         # Допишем полученные данные в лог
         new_kkt = Kkt(response_on_python['inn_kkt'],
                       response_on_python['fn_number'],
@@ -68,7 +84,7 @@ def get_kkt_detail(fn_number):
 def uptodate_kkt(kkt_saved):
     """Обновляем данные о кассе на сервере"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/kkt/'  # Полный адрес эндпоинта
+    url = settings.URL + '/api/kkt/'  # Полный адрес эндпоинта
     request = ''.join([url, kkt_saved.fn_number, '/'])
     data = kkt_saved.to_json()
     response = requests.put(request, json=data, headers=headers)
@@ -78,24 +94,32 @@ def uptodate_kkt(kkt_saved):
 def get_check_info(fn_number):
     """Получаем информацию о чеках с сервера по номеру ФН"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/check_kkt/'  # Полный адрес эндпоинта
+    url = settings.URL + '/api/check_kkt/'  # Полный адрес эндпоинта
     request = ''.join([url, fn_number])
-    response = requests.get(request, headers=headers)  # Делаем GET-запрос
+    response = ''
+    while response == '':
+        try:
+            response = requests.get(request, headers=headers)  # Делаем GET-запрос
+            break
+        except:
+            w_loggings("Connection refused by the server..")
+            time.sleep(5)
+            continue
     # Поскольку данные пришли в формате json, переведем их в python
     response_on_python = response.json()
-    if response.status_code == 200 :
+    if response.status_code == 200:
         res = []
         # Допишем полученные данные в файл лог
         for check in response_on_python:
             new_check = Check(
-                              check['date_added'],
-                              check['buyer_name'],
-                              check['buyer_inn'],
-                              int(check['tax_system']),
-                              check['send_check_to'],
-                              int(check['cash']),
-                              int(check['ecash'])
-                      )
+                check['date_added'],
+                check['buyer_name'],
+                check['buyer_inn'],
+                int(check['tax_system']),
+                check['send_check_to'],
+                int(check['cash']),
+                int(check['ecash'])
+            )
             w_loggings(new_check)
             res.append(new_check)
     else:
@@ -106,7 +130,7 @@ def get_check_info(fn_number):
 def get_check_detail(kkt, check):
     """Получаем информацию о чеке с сервера по номеру ФН и времени создания чека"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/check_kkt/'  # Полный адрес эндпоинта
+    url = settings.URL + '/api/check_kkt/'  # Полный адрес эндпоинта
     request = ''.join([url, kkt.fn_number, '/', check.date_added])
     response = requests.get(request, headers=headers)  # Делаем GET-запрос
     # Поскольку данные пришли в формате json, переведем их в python
@@ -121,7 +145,7 @@ def get_check_detail(kkt, check):
         for good in res['goods']:
             new_good = {'product_name': good['product_name'],
                         'qty': good['qty'],
-                        'tax_code':good['tax_code'],
+                        'tax_code': good['tax_code'],
                         'price': good['price'],
                         'product_type_code': good['product_type_code']
                         }
@@ -135,7 +159,7 @@ def get_check_detail(kkt, check):
 def uptodate_kkt_check(kkt_saved, check_saved):
     """Обновляем данные о чеке по кассе на сервере"""
     headers = {'Authorization': settings.TOKEN}
-    url = settings.URL+'/api/check_kkt/'  # Полный адрес эндпоинта
+    url = settings.URL + '/api/check_kkt/'  # Полный адрес эндпоинта
     request = ''.join([url, kkt_saved.fn_number, '/', check_saved.date_added])
     data = check_saved.to_json()
     response = requests.put(request, json=data, headers=headers)

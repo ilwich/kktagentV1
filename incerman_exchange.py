@@ -1,7 +1,6 @@
 """Модуль обмена с сервером Инкотекса"""
 import requests
-from icecream import ic
-from setting import settings
+from time import sleep
 from models import *
 from loggings import w_loggings
 
@@ -68,6 +67,24 @@ def inc_close_session(session_key):
         return False
 
 
+def inc_reset_check(session_key):
+    """ Аннулирование (сброс) текущего чека"""
+    headers = {'ContentType': 'application/json; charset=utf-8'}
+    url = settings.URL_INCERMAN  # Полный адрес эндпоинта
+    data = {"sessionKey": session_key,
+            "command": "ResetCheck",
+            }
+    response = requests.post(url, json=data, headers=headers)
+    # Поскольку данные пришли в формате json, переведем их в python
+    response_on_python = response.json()
+    # Запишем полученные данные в файл лога
+    if response_on_python['result'] == 0 :
+        w_loggings(f"Сброс текущего чека")
+        return f"Чек отменен"
+    else:
+        return False
+
+
 def inc_get_status(session_key):
     """ Запрос статуса на сервере Инкотекс"""
     headers = {'ContentType': 'application/json; charset=utf-8'}
@@ -88,8 +105,13 @@ def inc_get_status(session_key):
             'is24Expired': response_on_python['shiftInfo']['is24Expired'],
             'date_time': response_on_python['dateTime']
         }
+        # Если открыт чек, то подождать и провести отмену
+        if response_on_python['checkInfo']['isOpen'] == True:
+            sleep(20)
+            inc_reset_check(session_key)
         return res
     else:
+        w_loggings(f"Ошибка {response_on_python['result']} получения статуса кассы {response_on_python['description']}")
         return False
 
 

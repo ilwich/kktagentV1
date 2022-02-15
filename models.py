@@ -1,11 +1,9 @@
 """Модуль описания основных классов"""
 from setting import settings
 import datetime
-from icecream import ic
 from incerman_exchange import inc_open_session, inc_close_session, inc_get_status, inc_open_shift, inc_close_shift, \
     inc_open_check, inc_add_goods, inc_close_check
 from loggings import w_loggings
-
 
 
 class Kkt:
@@ -38,19 +36,20 @@ class Kkt:
                 self.session_key = inc_open_session()
             if self.session_key != '0':
                 kkt_status = inc_get_status(self.session_key)
-                if kkt_status['fn_number'] == self.fn_number:
-                    shft_status = {'shft_num': kkt_status['shft_num']}
-                    if not kkt_status['shft_isopen'] and not kkt_status['is24Expired']:
-                        shft_status = inc_open_shift(self.session_key, self)
-                    elif kkt_status['shft_isopen'] and kkt_status['is24Expired']:
-                        shft_status = inc_close_shift(self.session_key, self)
-                        if shft_status:
+                if kkt_status:
+                    if kkt_status['fn_number'] == self.fn_number:
+                        shft_status = {'shft_num': kkt_status['shft_num']}
+                        if not kkt_status['shft_isopen'] and not kkt_status['is24Expired']:
                             shft_status = inc_open_shift(self.session_key, self)
-                    self.shft_num = shft_status['shft_num']
-                    return True
-                else:
-                    w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
-                    return False
+                        elif kkt_status['shft_isopen'] and kkt_status['is24Expired']:
+                            shft_status = inc_close_shift(self.session_key, self)
+                            if shft_status:
+                                shft_status = inc_open_shift(self.session_key, self)
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                    else:
+                        w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                        return False
             else:
                 return False
             if inc_close_session(self.session_key):
