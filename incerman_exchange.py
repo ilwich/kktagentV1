@@ -3,6 +3,7 @@ import requests
 from time import sleep
 from models import *
 from loggings import w_loggings
+from setting import settings
 
 def inc_get_drvinfo():
     """ Получаем версию драйвера на сервере Инкотекс"""

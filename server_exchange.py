@@ -2,7 +2,7 @@
 import requests
 import time
 from models import *
-from setting import settings
+from setting import settings, settings_modify
 from loggings import w_loggings
 
 
@@ -16,7 +16,9 @@ def get_token():
     # Поскольку данные пришли в формате json, переведем их в python
     if response.status_code == 200:
         response_on_python = response.json()
-        settings.TOKEN = f"Token {response_on_python['token']}"
+        token_new_val = f"Token {response_on_python['token']}"
+        settings_modify(f'TOKEN = ', token_new_val)
+        settings.reload()
         return True
     else:
         w_loggings(f'Ошибка авторизации на Сервере чеков {response.status_code}')
@@ -31,9 +33,16 @@ def get_kkt():
     while response == '':
         try:
             response = requests.get(url, headers=headers)  # Делаем GET-запрос
+            response.raise_for_status()
             break
-        except:
-            w_loggings("Connection refused by the server..")
+        except requests.exceptions.RequestException as err:
+            w_loggings("OOps: Something Else", err)
+        except requests.exceptions.HTTPError as errh:
+            w_loggings("Http Error:", errh)
+        except requests.exceptions.ConnectionError as errc:
+            w_loggings("Error Connecting:", errc)
+        except requests.exceptions.Timeout as errt:
+            w_loggings("Timeout Error:", errt)
             time.sleep(5)
             continue
     # Поскольку данные пришли в формате json, переведем их в python
@@ -61,9 +70,16 @@ def get_kkt_detail(fn_number):
     while response == '':
         try:
             response = requests.get(request, headers=headers)  # Делаем GET-запрос
+            response.raise_for_status()
             break
-        except:
-            w_loggings("Connection refused by the server..")
+        except requests.exceptions.RequestException as err:
+            w_loggings("OOps: Something Else", err)
+        except requests.exceptions.HTTPError as errh:
+            w_loggings("Http Error:", errh)
+        except requests.exceptions.ConnectionError as errc:
+            w_loggings("Error Connecting:", errc)
+        except requests.exceptions.Timeout as errt:
+            w_loggings("Timeout Error:", errt)
             time.sleep(5)
             continue
     # Поскольку данные пришли в формате json, переведем их в python
@@ -100,9 +116,16 @@ def get_check_info(fn_number):
     while response == '':
         try:
             response = requests.get(request, headers=headers)  # Делаем GET-запрос
+            response.raise_for_status()
             break
-        except:
-            w_loggings("Connection refused by the server..")
+        except requests.exceptions.RequestException as err:
+            w_loggings(f"OOps: Something Else {err}")
+        except requests.exceptions.HTTPError as errh:
+            w_loggings(f"Http Error: {errh}")
+        except requests.exceptions.ConnectionError as errc:
+            w_loggings(f"Error Connecting:  {errc}")
+        except requests.exceptions.Timeout as errt:
+            w_loggings(f"Timeout Error:  {errt}")
             time.sleep(5)
             continue
     # Поскольку данные пришли в формате json, переведем их в python

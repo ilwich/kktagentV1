@@ -3,6 +3,11 @@ from setting import settings
 import datetime
 from incerman_exchange import inc_open_session, inc_close_session, inc_get_status, inc_open_shift, inc_close_shift, \
     inc_open_check, inc_add_goods, inc_close_check
+from armax_exchange import armax_get_status, armax_open_shift, armax_close_shift, armax_make_check
+from atol_exchange import atol_get_status, atol_open_shift, atol_close_shift, atol_open_check, atol_add_goods, \
+    atol_close_check
+from shtrih_exchange import shtrih_get_status, shtrih_open_shift, shtrih_close_shift, shtrih_open_check, \
+    shtrih_add_goods, shtrih_close_check
 from loggings import w_loggings
 
 
@@ -31,6 +36,7 @@ class Kkt:
 
     def open_shft(self):
         """Открытие смены на кассе"""
+        # касса инкотекс меркурий
         if settings.KKT_MODEL == 'Incotex':
             if self.session_key == '0':
                 self.session_key = inc_open_session()
@@ -54,6 +60,58 @@ class Kkt:
                 return False
             if inc_close_session(self.session_key):
                 self.session_key = '0'
+        # Касса armax НЕВА
+        if settings.KKT_MODEL == 'Armax':
+            kkt_status = armax_get_status()
+            if kkt_status:
+                if kkt_status['fn_number'] == self.fn_number:
+                    shft_status = {'shft_num': kkt_status['shft_num']}
+                    if not kkt_status['shft_isopen']:
+                        shft_status = armax_open_shift(self)
+                    self.shft_num = shft_status['shft_num']
+                    return True
+                else:
+                    w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                    return False
+        # Касса АТОЛ
+        if settings.KKT_MODEL == 'Atol':
+            kkt_status = atol_get_status()
+            if kkt_status:
+                if kkt_status['fn_number'] == self.fn_number:
+                    shft_status = {'shft_num': kkt_status['shft_num']}
+                    # Проверка состояния смены на кассе
+                    if not kkt_status['shft_isopen'] and not kkt_status['is24Expired']:
+                        shft_status = atol_open_shift(self)
+                    elif kkt_status['is24Expired']:
+                        shft_status = atol_close_shift(self)
+                        if shft_status:
+                            shft_status = atol_open_shift(self)
+                    self.shft_num = shft_status['shft_num']
+                    return True
+                else:
+                    w_loggings(
+                            f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                    return False
+        # Касса Штрих
+        if settings.KKT_MODEL == 'Shtrih':
+            kkt_status = shtrih_get_status()
+            if kkt_status:
+                if kkt_status['fn_number'] == self.fn_number:
+                    shft_status = {'shft_num': kkt_status['shft_num']}
+                    # Проверка состояния смены на кассе
+                    if not kkt_status['shft_isopen'] and not kkt_status['is24Expired']:
+                        shft_status = shtrih_open_shift(self)
+                    elif kkt_status['is24Expired']:
+                        shft_status = shtrih_close_shift(self)
+                        if shft_status:
+                            shft_status = shtrih_open_shift(self)
+                    self.shft_num = shft_status['shft_num']
+                    return True
+                else:
+                    w_loggings(
+                        f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                    return False
+        return False
 
     def close_shft(self):
         """Закрытие смены на кассе"""
@@ -68,10 +126,59 @@ class Kkt:
                         shft_status = inc_close_shift(self.session_key, self)
                     if shft_status:
                         self.shft_num = shft_status['shft_num']
+                    return True
                 else:
                     w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                    return False
             if inc_close_session(self.session_key):
                 self.session_key = '0'
+        # Касса Armax НЕВА
+        if settings.KKT_MODEL == 'Armax':
+            kkt_status = armax_get_status()
+            if kkt_status['fn_number'] == self.fn_number:
+                shft_status = {'shft_num': kkt_status['shft_num']}
+                if kkt_status['shft_isopen']:
+                    shft_status = armax_close_shift(self)
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                return True
+            else:
+                w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                return False
+        # Касса АТОЛ
+        if settings.KKT_MODEL == 'Atol':
+            kkt_status = atol_get_status()
+            if kkt_status['fn_number'] == self.fn_number:
+                shft_status = {'shft_num': kkt_status['shft_num']}
+                if kkt_status['shft_isopen']:
+                    shft_status = atol_close_shift(self)
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                else:
+                    return True
+            else:
+                w_loggings(
+                    f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                return False
+        # Касса Штрих
+        if settings.KKT_MODEL == 'Shtrih':
+            kkt_status = shtrih_get_status()
+            if kkt_status['fn_number'] == self.fn_number:
+                shft_status = {'shft_num': kkt_status['shft_num']}
+                if kkt_status['shft_isopen']:
+                    shft_status = shtrih_close_shift(self)
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                else:
+                    return True
+            else:
+                w_loggings(
+                   f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
+                return False
+        return False
+
 
     def make_check_onbuy(self, check_kkt):
         """Проведение чека прихода"""
@@ -101,6 +208,61 @@ class Kkt:
                     check_kkt.status = data
             if inc_close_session(self.session_key):
                 self.session_key = '0'
+                return True
+        if settings.KKT_MODEL == 'Armax':
+            check_status = armax_make_check(self, check_kkt)
+            if check_status:
+                    # Забираем текущую дату время чека из кассы для формирования qr кода в строку статуса
+                    check_date_time = check_status['date_time']
+                    check_kkt.shft_num = check_status['shft_num']
+                    check_kkt.check_num = check_status['check_num']
+                    # формирование  строки данных для qr кода чека
+                    check_datetime = datetime.datetime.strptime(check_date_time, '%d.%m.%y %H:%M').strftime(
+                        "%Y%m%dT%H%M")
+                    check_summ = (check_kkt.cash + check_kkt.ecash) / 100
+                    data = f"t={check_datetime}" \
+                           f"&s={check_summ:.02f}" \
+                           f"&fn={self.fn_number}" \
+                           f"&i={check_status['fiscal_doc_num']}" \
+                           f"&fp={check_status['fiscal_sign']}&n=1"
+                    check_kkt.status = data
+                    return True
+        if settings.KKT_MODEL == 'Atol':
+            if atol_open_check(self, check_kkt, 0):
+                for good in check_kkt.goods:
+                    atol_add_goods(self, good)
+            check_status = atol_close_check(self, check_kkt)
+            if check_status:
+                check_kkt.shft_num = check_status['shft_num']
+                check_kkt.check_num = check_status['check_num']
+                # формирование  строки данных для qr кода чека
+                check_datetime = check_status['date_time'].strftime("%Y%m%dT%H%M")
+                check_summ = (check_kkt.cash + check_kkt.ecash) / 100
+                data = f"t={check_datetime}" \
+                       f"&s={check_summ:.02f}" \
+                       f"&fn={self.fn_number}" \
+                       f"&i={check_status['fiscal_doc_num']}" \
+                       f"&fp={check_status['fiscal_sign']}&n=1"
+                check_kkt.status = data
+                return True
+        if settings.KKT_MODEL == 'Shtrih':
+            if shtrih_open_check(self, check_kkt, 0):
+                shtrih_add_goods(self, check_kkt)
+            check_status = shtrih_close_check(self, check_kkt)
+            if check_status:
+                check_kkt.shft_num = check_status['shft_num']
+                check_kkt.check_num = check_status['check_num']
+                # формирование  строки данных для qr кода чека
+
+                check_datetime = datetime.datetime.strptime(check_status['date_time'], '%Y-%m-%dT%H:%M').strftime(
+                        "%Y%m%dT%H%M")
+                check_summ = (check_kkt.cash + check_kkt.ecash) / 100
+                data = f"t={check_datetime}" \
+                       f"&s={check_summ:.02f}" \
+                       f"&fn={self.fn_number}" \
+                       f"&i={check_status['fiscal_doc_num']}" \
+                       f"&fp={check_status['fiscal_sign']}&n=1"
+                check_kkt.status = data
                 return True
         return False
 

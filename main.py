@@ -1,6 +1,6 @@
 from server_exchange import get_token, get_kkt, get_kkt_detail, uptodate_kkt, get_check_info,\
     get_check_detail, uptodate_kkt_check
-from setting import settings
+from setting import settings, from_json_to_setting
 from time import sleep
 import servicemanager
 import os
@@ -39,33 +39,57 @@ class KktAgentService(win32serviceutil.ServiceFramework):
 
 def watch_kkt_check():
     """Основная процедура опроса сервера для отправки чеков на кассу"""
-    fn_number = settings.FN_NUMBER
-    if get_token():  # Если удачно получен токен от сервера по имени и паролю
-        k = get_kkt_detail(fn_number)  # По номеру ФН получаем информацию о кассе
-        while True:
-            chk_arr = get_check_info(fn_number)  # Запрос добавленных чеков
-            if chk_arr:
-                if k.open_shft():  # Открытие смены на локальном кассовом аппарате
-                    for el in chk_arr:
-                        get_check_detail(k, el)  # Запрос подробной информации по чекам
-                        check_status = k.make_check_onbuy(el)  # Регистрация чека на кассовом аппарате
-                        if check_status:
-                            uptodate_kkt_check(k, el)  # Обновление информации о чеке на сервере
-            sleep(settings.TIMER)
+    from_json_to_setting()
+    while True:
+        if get_token():  # Если удачно получен токен от сервера по имени и паролю
+            k = get_kkt_detail(settings.FN_NUMBER)  # По номеру ФН получаем информацию о кассе
+            while True:
+                chk_arr = get_check_info(settings.FN_NUMBER)  # Запрос добавленных чеков
+                if chk_arr:
+                    if k.open_shft():  # Открытие смены на локальном кассовом аппарате
+                        for el in chk_arr:
+                            get_check_detail(k, el)  # Запрос подробной информации по чекам
+                            check_status = k.make_check_onbuy(el)  # Регистрация чека на кассовом аппарате
+                            if check_status:
+                                uptodate_kkt_check(k, el)  # Обновление информации о чеке на сервере
+                sleep(settings.TIMER)
+                if from_json_to_setting():
+                    break
+        else:
+            while from_json_to_setting() == False:
+                sleep(settings.TIMER)
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(KktAgentService)
-        servicemanager.StartServiceCtrlDispatcher()
+         servicemanager.Initialize()
+         servicemanager.PrepareToHostSingle(KktAgentService)
+         servicemanager.StartServiceCtrlDispatcher()
     else:
-        win32serviceutil.HandleCommandLine(KktAgentService)
+         win32serviceutil.HandleCommandLine(KktAgentService)
 
-
-
-
-
+    # if get_token():
+    #     kkt_list = get_kkt()
+    #     if kkt_list:
+    #         for kkt in kkt_list:
+    #             print(kkt)
+    # fn_number = settings.FN_NUMBER
+    # if get_token():  # Если удачно получен токен от сервера по имени и паролю
+    #     k = get_kkt_detail(fn_number)  # По номеру ФН получаем информацию о кассе
+    #     chk_arr = get_check_info(fn_number)  # Запрос добавленных чеков
+    #     if chk_arr:
+    #         if k.open_shft():  # Открытие смены на локальном кассовом аппарате
+    #             ic(k.to_json())
+    #             for el in chk_arr:
+    #                  get_check_detail(k, el)  # Запрос подробной информации по чекам
+    #                  ic(el.to_json())
+    #                  check_status = k.make_check_onbuy(el)  # Регистрация чека на кассовом аппарате
+    #                  ic(check_status)
+    #                  if check_status:
+    #                      uptodate_kkt_check(k, el)  # Обновление информации о чеке на сервере
+    #                  else:
+    #                      el.status = 'Формируется. Ошибка в чеке!'
+    #                      uptodate_kkt_check(k, el)  # Обновление информации о чеке на сервере
 
 
     # print(inc_get_drvinfo())
