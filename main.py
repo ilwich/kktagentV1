@@ -61,6 +61,7 @@ def watch_kkt_check():
 
 
 if __name__ == '__main__':
+    #watch_kkt_check()
     if len(sys.argv) == 1:
          servicemanager.Initialize()
          servicemanager.PrepareToHostSingle(KktAgentService)

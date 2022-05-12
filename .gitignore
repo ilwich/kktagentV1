@@ -7,3 +7,5 @@ venv/
 .secrets.toml
 settings.toml
 .idea/
+msi/
+dist/
