@@ -44,7 +44,7 @@ def shtrih_open_session():
     fr = win32com.client.Dispatch("Addin.DrvFR")
     fr.ConnectionType = settings.CON_TYPE  # тип подключения 6- TCP Сокет 0- СОМ
     fr.IPAddress = settings.IP_ADRESS
-    fr.ComNumber = settings.COM - 1
+    fr.ComNumber = settings.COM
     fr.BaudRate = 6  # скорость 115200
     fr.UseIPAddress = True  # Используем свойство IPAddress
     fr.password = 30

@@ -9,3 +9,6 @@ settings.toml
 .idea/
 msi/
 dist/
+msi_32x/
+dist_32x/
+build/
