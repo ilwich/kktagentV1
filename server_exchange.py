@@ -36,13 +36,13 @@ def get_kkt():
             response.raise_for_status()
             break
         except requests.exceptions.RequestException as err:
-            w_loggings("OOps: Something Else", err)
+            w_loggings(f"OOps: Something Else {err}")
         except requests.exceptions.HTTPError as errh:
-            w_loggings("Http Error:", errh)
+            w_loggings(f"Http Error: {errh}")
         except requests.exceptions.ConnectionError as errc:
-            w_loggings("Error Connecting:", errc)
+            w_loggings(f"Error Connecting:  {errc}")
         except requests.exceptions.Timeout as errt:
-            w_loggings("Timeout Error:", errt)
+            w_loggings(f"Timeout Error:  {errt}")
             time.sleep(5)
             continue
     # Поскольку данные пришли в формате json, переведем их в python
@@ -73,18 +73,19 @@ def get_kkt_detail(fn_number):
             response.raise_for_status()
             break
         except requests.exceptions.RequestException as err:
-            w_loggings("OOps: Something Else", err)
+            w_loggings(f"OOps: Something Else {err}")
         except requests.exceptions.HTTPError as errh:
-            w_loggings("Http Error:", errh)
+            w_loggings(f"Http Error: {errh}")
         except requests.exceptions.ConnectionError as errc:
-            w_loggings("Error Connecting:", errc)
+            w_loggings(f"Error Connecting:  {errc}")
         except requests.exceptions.Timeout as errt:
-            w_loggings("Timeout Error:", errt)
+            w_loggings(f"Timeout Error:  {errt}")
             time.sleep(5)
             continue
-    # Поскольку данные пришли в формате json, переведем их в python
-    response_on_python = response.json()
+
     if response.status_code == 200:
+        # Поскольку данные пришли в формате json, переведем их в python
+        response_on_python = response.json()
         # Допишем полученные данные в лог
         new_kkt = Kkt(response_on_python['inn_kkt'],
                       response_on_python['fn_number'],

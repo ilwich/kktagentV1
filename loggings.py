@@ -12,6 +12,7 @@ def w_loggings(logdata):
     if os.path.isfile(settings.LOG_FILE):
         # проверка размера файла
         if os.path.getsize(settings.LOG_FILE) > 10485760 :
+
             with open(settings.LOG_FILE, 'w', encoding="UTF-8") as file:
                 file.write(f" {w_string}\n")
         else:
