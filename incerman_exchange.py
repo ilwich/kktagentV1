@@ -139,6 +139,7 @@ def inc_open_shift(session_key, kkt):
         }
         return res
     else:
+        w_loggings(f"Ошибка открытия смены {response_on_python['description']}")
         return False
 
 
@@ -165,6 +166,7 @@ def inc_close_shift(session_key, kkt):
         }
         return res
     else:
+        w_loggings(f"Ошибка закрытия смены {response_on_python['description']}")
         return False
 
 

@@ -51,8 +51,11 @@ class Kkt:
                             shft_status = inc_close_shift(self.session_key, self)
                             if shft_status:
                                 shft_status = inc_open_shift(self.session_key, self)
-                        self.shft_num = shft_status['shft_num']
-                        return True
+                        if shft_status:
+                            self.shft_num = shft_status['shft_num']
+                            return True
+                        else:
+                            return False
                     else:
                         w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
                         return False
@@ -68,8 +71,11 @@ class Kkt:
                     shft_status = {'shft_num': kkt_status['shft_num']}
                     if not kkt_status['shft_isopen']:
                         shft_status = armax_open_shift(self)
-                    self.shft_num = shft_status['shft_num']
-                    return True
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                    else:
+                        return False
                 else:
                     w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
                     return False
@@ -86,8 +92,11 @@ class Kkt:
                         shft_status = atol_close_shift(self)
                         if shft_status:
                             shft_status = atol_open_shift(self)
-                    self.shft_num = shft_status['shft_num']
-                    return True
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                    else:
+                        return False
                 else:
                     w_loggings(
                             f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
@@ -105,8 +114,11 @@ class Kkt:
                         shft_status = shtrih_close_shift(self)
                         if shft_status:
                             shft_status = shtrih_open_shift(self)
-                    self.shft_num = shft_status['shft_num']
-                    return True
+                    if shft_status:
+                        self.shft_num = shft_status['shft_num']
+                        return True
+                    else:
+                        return False
                 else:
                     w_loggings(
                         f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
@@ -126,7 +138,9 @@ class Kkt:
                         shft_status = inc_close_shift(self.session_key, self)
                     if shft_status:
                         self.shft_num = shft_status['shft_num']
-                    return True
+                        return True
+                    else:
+                        return False
                 else:
                     w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
                     return False
@@ -141,7 +155,9 @@ class Kkt:
                     shft_status = armax_close_shift(self)
                     if shft_status:
                         self.shft_num = shft_status['shft_num']
-                return True
+                        return True
+                    else:
+                        return False
             else:
                 w_loggings(f'Номер ФН в кассе {kkt_status["fn_number"]} не соответствует ФН на сервере {self.fn_number}')
                 return False
@@ -155,6 +171,8 @@ class Kkt:
                     if shft_status:
                         self.shft_num = shft_status['shft_num']
                         return True
+                    else:
+                        return False
                 else:
                     return True
             else:
@@ -171,6 +189,8 @@ class Kkt:
                     if shft_status:
                         self.shft_num = shft_status['shft_num']
                         return True
+                    else:
+                        return False
                 else:
                     return True
             else:

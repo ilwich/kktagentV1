@@ -131,6 +131,7 @@ def atol_open_shift(kkt):
             return res
         else:
             w_loggings(f"Не удалось получить номер смены на кассе Атол {kkt.fn_number}")
+            return False
     else:
         return False
 
@@ -163,6 +164,7 @@ def atol_close_shift(kkt):
             return res
         else:
             w_loggings(f"Не удалось получить номер смены на кассе Атол {kkt.fn_number}")
+            return False
     else:
         return False
 
